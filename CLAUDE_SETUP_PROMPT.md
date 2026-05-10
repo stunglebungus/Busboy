@@ -25,7 +25,7 @@ Once the setup script has finished, do the following steps in order:
 
 4. Update `/home/pi/busticker/tracker.py` on the Pi:
    - Change `UTS_STOP_ID` to my arrival stop ID
-   - Change the two `"Martin Place"` destination strings in `main()` to match my route's destination (check what the API returns as the destination name for my route — don't guess)
+   - Change the two `"Martin Place"` destination strings in `main()` to match my route's destination (check what the API returns as the destination name — don't guess)
 
 5. Restart the service and check the logs to confirm it's pulling departures successfully.
 
@@ -33,6 +33,8 @@ Once the setup script has finished, do the following steps in order:
 - All SSH/SFTP is done via paramiko (install with `pip install paramiko` if needed)
 - `sudo` over SSH requires the Pi password piped via `echo PASSWORD | sudo -S` or NOPASSWD configured first
 - The TfNSW Stop Finder API requires `type_sf=any` — `type_sf=stop` returns an error
-- All route services share the same trip ID, so UTS/arrival matching is done by time window (15–50 min after departure), not by trip ID
+- All route services share the same trip ID, so arrival stop matching is done by time window (15–50 min after departure), not by trip ID
+- The TfNSW API returns times in UTC (`Z` suffix). Always call `.astimezone()` before `.strftime()` on parsed departure times — skipping this causes times to display ~10h behind local time
+- Services with `isRealtimeControlled: true` show a LIVE badge and real estimated times; others show scheduled times only
 - The tracker only logs errors — no output in `journalctl` means it's working correctly
-- When printing Pi output to the terminal, encode with `.encode('ascii', errors='replace').decode()` to handle the → character
+- When printing Pi output to the Windows terminal, encode with `.encode('ascii', errors='replace').decode()` to handle the → character

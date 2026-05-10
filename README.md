@@ -62,9 +62,10 @@ This searches for stops by name. Edit the search terms at the bottom of `find_st
 `tracker.py` has two values hardcoded for the original route that you'll need to change for a different destination:
 
 ```python
-# In main(), change "Martin Place" to your route's destination:
-departures = parse_departures(data, "Martin Place")
-uts_times  = parse_departures(uts_data, "Martin Place")
+# In main(), change "Martin Place" to your route's destination
+# (use exactly the destination name the API returns — check with find_stop.py):
+deps      = parse(fetch(config.STOP_ID), "Martin Place")[:4]
+uts_times = [e["dep"] for e in parse(fetch(UTS_STOP_ID), "Martin Place")]
 
 # Change UTS_STOP_ID to a stop ID along your route you want arrival times for:
 UTS_STOP_ID = "G200723"   # UTS, Broadway, Ultimo
@@ -82,14 +83,26 @@ sudo journalctl -u busticker -n 20 --no-pager
 ## Display layout
 
 ```
-423 → Martin Place         17:05
+423 → Martin Place              18:05
 Sun 10 May 2026
-─────────────────────────────────
-Due    17:05   →UTS 17:33
-8min   17:13   →UTS 17:41
-23min  17:28   →UTS 17:56
-38min  17:43   →UTS 18:11
+──────────────────────────────────────
+Due   18:09  [LIVE] +3m   →UTS 18:37
+15m   18:24  [LIVE]        →UTS 18:52
+30m   18:39                →UTS 19:07
+45m   18:54  [LIVE]        →UTS 19:22
 ```
+
+- **Minutes until departure** — bold, left column
+- **Departure time** — 24h local time; shows the real-time estimated time when available
+- **LIVE badge** — inverted black box, only shown for services with active GPS tracking (~10% at any given time). Services without it show scheduled times only
+- **Delay** — shown as `+Nm` next to the LIVE badge when a tracked service is 2+ minutes late; `−Nm` if early
+- **→UTS arrival** — right-aligned projected arrival at the configured intermediate stop, matched by time window
+
+All times are in 24h local time.
+
+## Real-time data
+
+The TfNSW API provides real-time GPS tracking for some services (`isRealtimeControlled: true`). When active, the displayed departure time reflects the live estimated time. Services without tracking show their scheduled time. Cancellations are not currently detected.
 
 ## Troubleshooting
 
@@ -97,5 +110,6 @@ Due    17:05   →UTS 17:33
 |---------|-------|-----|
 | "No departures found" | Wrong stop ID or wrong side of road | Re-run `find_stop.py`, check both stop IDs |
 | `401 Client Error` | Invalid or missing API key | Check `API_KEY` in `config.py` |
+| Times showing ~10h behind | UTC displayed instead of local time | Ensure `dep_dt.astimezone().strftime(...)` in `tracker.py` |
 | Service crashes on import | `waveshare_epd` not installed | Re-run `pi_setup.py` or manually run `setup.py install` in `/home/pi/e-Paper/RaspberryPi_JetsonNano/python/` |
 | `→UTS --:--` shown | No matching arrival found in 15–50 min window | Adjust `UTS_MIN_TRAVEL` / `UTS_MAX_TRAVEL` in `tracker.py` |
