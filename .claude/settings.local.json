@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python pi_setup.py)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
